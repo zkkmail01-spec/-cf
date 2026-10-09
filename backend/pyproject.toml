@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "family-menu-api"
+version = "0.1.0"
+description = "Family meal ordering API for WeChat CloudBase Cloud Hosting"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi==0.115.6",
+  "pydantic==2.10.4",
+  "pydantic-settings==2.7.1",
+  "sqlalchemy==2.0.36",
+  "aiosqlite==0.20.0",
+  "asyncpg==0.30.0",
+  "alembic==1.14.0",
+  "uvicorn==0.34.0",
+  "anyio==4.8.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest==8.3.4",
+  "pytest-asyncio==0.25.2",
+  "httpx==0.28.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
