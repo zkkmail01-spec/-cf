@@ -1,0 +1,4 @@
+{
+  "desc": "家庭内部使用的小程序",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

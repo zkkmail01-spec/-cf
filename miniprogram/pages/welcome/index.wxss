@@ -1,0 +1,38 @@
+.welcome-page {
+  padding-top: 96rpx;
+}
+
+.hero {
+  margin-bottom: 48rpx;
+  text-align: center;
+}
+
+.brand-mark {
+  margin-bottom: 20rpx;
+  font-size: 88rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 650;
+}
+
+.divider {
+  position: relative;
+  margin: 40rpx 0;
+  color: #9a9f9b;
+  text-align: center;
+}
+
+.divider::before,
+.divider::after {
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  height: 2rpx;
+  background: #ebe5d9;
+  content: '';
+}
+
+.divider::before { left: 0; }
+.divider::after { right: 0; }

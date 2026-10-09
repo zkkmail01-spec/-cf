@@ -1,0 +1,16 @@
+<view class="page invite-page">
+  <view wx:if="{{loading}}" class="state">正在查看邀请…</view>
+  <view wx:elif="{{error && !preview}}" class="card state">
+    <view class="empty-icon">🕰️</view>
+    <view>{{error}}</view>
+    <button class="button-secondary" bindtap="loadPreview">重试</button>
+  </view>
+  <view wx:else class="card invitation-card">
+    <view class="family-avatar">🏠</view>
+    <view class="title">{{preview.familyName}}</view>
+    <view class="subtitle">{{preview.inviterNickname}} 邀请你加入这个家庭，一起安排每天三餐。</view>
+    <input class="field" placeholder="家人怎么称呼你" maxlength="80" value="{{nickname}}" bindinput="onNickname" />
+    <button class="button-primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="joinFamily">确认加入</button>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+  </view>
+</view>

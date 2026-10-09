@@ -1,0 +1,25 @@
+<view class="page welcome-page">
+  <view class="hero">
+    <view class="brand-mark">🍲</view>
+    <view class="title">家里吃什么</view>
+    <view class="subtitle">全家一起点菜，三餐安排一眼就明白。</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state">正在连接家庭厨房…</view>
+  <view wx:elif="{{error && !familyName && !nickname}}" class="card state">
+    <view>{{error}}</view>
+    <button class="button-secondary" bindtap="loadSession">重新连接</button>
+  </view>
+  <view wx:else class="card form-card">
+    <view class="section-title">创建我的家庭</view>
+    <input class="field" placeholder="例如：幸福一家" maxlength="80" value="{{familyName}}" bindinput="onFamilyName" />
+    <input class="field" placeholder="家人怎么称呼你" maxlength="80" value="{{nickname}}" bindinput="onNickname" />
+    <button class="button-primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="createFamily">创建家庭</button>
+
+    <view class="divider"><text>或</text></view>
+    <view class="section-title">通过邀请加入</view>
+    <input class="field" placeholder="输入家人发来的邀请码" value="{{inviteCode}}" bindinput="onInviteCode" />
+    <button class="button-secondary" bindtap="openInvite">查看邀请</button>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+  </view>
+</view>

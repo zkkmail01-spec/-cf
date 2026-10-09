@@ -1,0 +1,15 @@
+.invite-page {
+  display: flex;
+  align-items: center;
+}
+
+.invitation-card {
+  width: 100%;
+  text-align: center;
+}
+
+.family-avatar,
+.empty-icon {
+  margin-bottom: 24rpx;
+  font-size: 88rpx;
+}

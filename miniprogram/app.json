@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/welcome/index",
+    "pages/invite/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "家里吃什么",
+    "navigationBarBackgroundColor": "#F8F4EA",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F8F4EA",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

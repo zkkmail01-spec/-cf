@@ -1,0 +1,76 @@
+page {
+  min-height: 100%;
+  background: #f8f4ea;
+  color: #25352c;
+  font-size: 28rpx;
+}
+
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 40rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.card {
+  padding: 36rpx;
+  border-radius: 28rpx;
+  background: #fffdf8;
+  box-shadow: 0 12rpx 32rpx rgba(45, 76, 59, 0.08);
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.subtitle {
+  margin-top: 16rpx;
+  color: #6c766f;
+  line-height: 1.6;
+}
+
+.field {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  margin-top: 24rpx;
+  padding: 22rpx 24rpx;
+  border: 2rpx solid #e4dfd3;
+  border-radius: 18rpx;
+  background: #fff;
+}
+
+.button-primary,
+.button-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  margin-top: 28rpx;
+  border-radius: 22rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.button-primary {
+  background: #2f684a;
+  color: #fff;
+}
+
+.button-secondary {
+  border: 2rpx solid #2f684a;
+  background: transparent;
+  color: #2f684a;
+}
+
+.state {
+  padding: 96rpx 28rpx;
+  text-align: center;
+  color: #6c766f;
+}
+
+.error {
+  margin-top: 20rpx;
+  color: #b54b3f;
+}

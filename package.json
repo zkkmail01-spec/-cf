@@ -1,0 +1,15 @@
+{
+  "name": "family-menu-mini-program",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/miniprogram/tests"]
+  }
+}
