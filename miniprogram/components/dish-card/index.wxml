@@ -1,0 +1,10 @@
+<view class="dish-card {{selected ? 'is-selected' : ''}}" bindtap="onTap">
+  <image wx:if="{{dish.imageFileId}}" class="dish-image" src="{{dish.imageFileId}}" mode="aspectFill" />
+  <view wx:else class="dish-placeholder">🍽️</view>
+  <view class="dish-content">
+    <view class="dish-name">{{dish.name}}</view>
+    <view class="dish-category">{{dish.categoryName || '家常菜'}}</view>
+    <view wx:if="{{selected}}" class="selected-label">已选</view>
+  </view>
+  <button wx:if="{{editable}}" class="edit-button" catchtap="onEdit">编辑</button>
+</view>

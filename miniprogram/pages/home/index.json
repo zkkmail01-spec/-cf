@@ -1,0 +1,1 @@
+{ "navigationBarTitleText": "家里吃什么", "usingComponents": { "meal-tabs": "/components/meal-tabs/index", "empty-state": "/components/empty-state/index" } }

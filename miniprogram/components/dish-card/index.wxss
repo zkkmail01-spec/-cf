@@ -1,0 +1,9 @@
+.dish-card { position: relative; display: flex; overflow: hidden; align-items: center; min-height: 148rpx; margin-bottom: 20rpx; padding: 18rpx; border: 3rpx solid transparent; border-radius: 24rpx; background: #fffdf8; box-shadow: 0 8rpx 22rpx rgba(45, 76, 59, .07); }
+.dish-card.is-selected { border-color: #2f684a; background: #f0f7f1; }
+.dish-image, .dish-placeholder { width: 112rpx; height: 112rpx; border-radius: 18rpx; }
+.dish-placeholder { display: flex; align-items: center; justify-content: center; background: #efe8d8; font-size: 50rpx; }
+.dish-content { flex: 1; margin-left: 22rpx; }
+.dish-name { font-size: 32rpx; font-weight: 650; }
+.dish-category { margin-top: 8rpx; color: #7c817d; font-size: 24rpx; }
+.selected-label { display: inline-block; margin-top: 10rpx; padding: 5rpx 14rpx; border-radius: 99rpx; background: #2f684a; color: #fff; font-size: 22rpx; }
+.edit-button { margin: 0; padding: 0 20rpx; background: #f4a259; color: #fff; font-size: 24rpx; line-height: 60rpx; }

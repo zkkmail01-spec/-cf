@@ -1,0 +1,19 @@
+<view class="page edit-page">
+  <view wx:if="{{loading}}" class="state">正在准备菜品表单…</view>
+  <view wx:else>
+    <view class="image-box" bindtap="chooseImage"><image wx:if="{{form.imageFileId}}" src="{{form.imageFileId}}" mode="aspectFill" /><view wx:else><view class="image-icon">📷</view><view>上传菜品图片</view></view></view>
+    <view class="label">菜名</view><input class="field" data-field="name" value="{{form.name}}" placeholder="例如：番茄炒蛋" bindinput="setField" /><view wx:if="{{errors.name}}" class="error">{{errors.name}}</view>
+    <view class="label">分类</view><picker range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="chooseCategory"><view class="field picker-field">{{categories[categoryIndex].name || '请选择分类'}}</view></picker><view wx:if="{{errors.categoryId}}" class="error">{{errors.categoryId}}</view>
+    <view class="label">做法说明</view><textarea class="field textarea" data-field="description" value="{{form.description}}" placeholder="口味、做法或家人的小备注" bindinput="setField" />
+    <view class="ingredient-heading"><view class="label">所需食材</view><button bindtap="addIngredient">＋ 添加</button></view>
+    <view wx:for="{{form.ingredients}}" wx:key="index" class="ingredient-card">
+      <input data-index="{{index}}" data-field="name" value="{{item.name}}" placeholder="食材名称" bindinput="setIngredient" />
+      <view class="quantity-row"><input data-index="{{index}}" data-field="quantity" value="{{item.quantity}}" type="digit" placeholder="数量" bindinput="setIngredient" /><input data-index="{{index}}" data-field="unit" value="{{item.unit}}" placeholder="单位" bindinput="setIngredient" /></view>
+      <input data-index="{{index}}" data-field="note" value="{{item.note}}" placeholder="备注（可选）" bindinput="setIngredient" />
+      <button class="remove" data-index="{{index}}" bindtap="removeIngredient">删除这一项</button>
+    </view>
+    <view wx:if="{{errors.ingredients}}" class="error">{{errors.ingredients}}</view><view wx:if="{{error}}" class="error">{{error}}</view>
+    <button class="button-primary" loading="{{saving}}" disabled="{{saving}}" bindtap="save">保存菜品</button>
+    <button wx:if="{{id}}" class="danger-button" bindtap="deactivate">停用菜品</button>
+  </view>
+</view>

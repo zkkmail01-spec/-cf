@@ -1,0 +1,1 @@
+{ "navigationBarTitleText": "我要点菜", "usingComponents": { "meal-tabs": "/components/meal-tabs/index", "dish-card": "/components/dish-card/index", "empty-state": "/components/empty-state/index" } }

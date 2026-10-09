@@ -1,0 +1,8 @@
+.date-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24rpx; }
+.date-label { font-size: 34rpx; font-weight: 700; }
+.selected-count { padding: 10rpx 18rpx; border-radius: 99rpx; background: #f4a259; color: #fff; font-size: 24rpx; }
+.search { margin: 24rpx 0 18rpx; }
+.category-row { margin-bottom: 24rpx; white-space: nowrap; }
+.category-pill { display: inline-block; min-width: 92rpx; margin-right: 14rpx; padding: 16rpx 24rpx; border-radius: 99rpx; background: #ebe5d9; text-align: center; }
+.category-pill.active { background: #2f684a; color: #fff; }
+.error-banner { margin: 0 0 20rpx; padding: 18rpx; border-radius: 16rpx; background: #fff0ed; }

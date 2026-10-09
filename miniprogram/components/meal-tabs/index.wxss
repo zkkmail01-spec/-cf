@@ -1,0 +1,3 @@
+.meal-tabs { display: flex; padding: 8rpx; border-radius: 22rpx; background: #e9e3d6; }
+.meal-tab { flex: 1; min-height: 72rpx; border-radius: 17rpx; color: #6f776f; line-height: 72rpx; text-align: center; }
+.meal-tab.active { background: #2f684a; color: #fff; font-weight: 650; box-shadow: 0 6rpx 16rpx rgba(47, 104, 74, .18); }

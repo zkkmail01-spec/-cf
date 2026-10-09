@@ -1,0 +1,15 @@
+.home-heading { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32rpx; }
+.eyebrow { margin-bottom: 8rpx; color: #758078; font-size: 24rpx; }
+.chef-badge { padding: 12rpx 20rpx; border-radius: 99rpx; background: #f4a259; color: #fff; font-size: 24rpx; }
+.today-card { padding: 28rpx; }
+.meal-list { margin: 26rpx 0; }
+.meal-item { display: flex; justify-content: space-between; padding: 18rpx 4rpx; border-bottom: 2rpx solid #eee8dc; }
+.selector-count, .subtle, .frequent-count { color: #7d847f; font-size: 24rpx; }
+.meal-empty { padding: 42rpx 0 12rpx; color: #79817b; text-align: center; }
+.section-title { margin: 44rpx 0 22rpx; font-size: 34rpx; font-weight: 700; }
+.quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20rpx; }
+.quick-card { display: flex; align-items: center; min-height: 112rpx; padding: 22rpx; border-radius: 24rpx; background: #fffdf8; box-shadow: 0 8rpx 24rpx rgba(45,76,59,.07); font-weight: 600; }
+.quick-icon { margin-right: 18rpx; font-size: 44rpx; }
+.frequent-row { width: 100%; white-space: nowrap; }
+.frequent-card { display: inline-block; width: 210rpx; margin-right: 18rpx; padding: 24rpx; border-radius: 22rpx; background: #fffdf8; }
+.frequent-icon { margin-bottom: 18rpx; font-size: 54rpx; }

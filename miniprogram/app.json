@@ -1,7 +1,11 @@
 {
   "pages": [
     "pages/welcome/index",
-    "pages/invite/index"
+    "pages/invite/index",
+    "pages/home/index",
+    "pages/order/index",
+    "pages/dishes/index",
+    "pages/dish-edit/index"
   ],
   "window": {
     "navigationBarTitleText": "家里吃什么",
@@ -9,6 +13,16 @@
     "navigationBarTextStyle": "black",
     "backgroundColor": "#F8F4EA",
     "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#7A817C",
+    "selectedColor": "#2F684A",
+    "backgroundColor": "#FFFDF8",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/dishes/index", "text": "菜谱" }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

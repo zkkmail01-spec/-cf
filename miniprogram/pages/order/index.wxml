@@ -1,0 +1,9 @@
+<view class="page order-page">
+  <view class="date-row"><text class="date-label">{{state.date}}</text><text class="selected-count">已选 {{selectedCount}} 道</text></view>
+  <meal-tabs value="{{state.mealType}}" bindchange="changeMeal" />
+  <input class="field search" placeholder="搜索菜名或食材" value="{{query}}" bindinput="onSearch" />
+  <scroll-view scroll-x class="category-row"><view data-id="" class="category-pill {{!categoryId ? 'active' : ''}}" bindtap="chooseCategory">全部</view><view wx:for="{{categories}}" wx:key="id" data-id="{{item.id}}" class="category-pill {{categoryId === item.id ? 'active' : ''}}" bindtap="chooseCategory">{{item.name}}</view></scroll-view>
+  <view wx:if="{{error}}" class="error error-banner">{{error}}</view>
+  <empty-state wx:if="{{loading || (!visibleDishes.length && !error)}}" loading="{{loading}}" title="没有找到菜品" action-text="刷新" bindaction="loadData" />
+  <dish-card wx:for="{{visibleDishes}}" wx:key="id" dish="{{item}}" selected="{{item.selected}}" loading="{{pendingDishId === item.id}}" bindselect="toggleDish" />
+</view>

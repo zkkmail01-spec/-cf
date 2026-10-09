@@ -1,0 +1,21 @@
+<view class="page home-page">
+  <view class="home-heading"><view><view class="eyebrow">今天 {{date}}</view><view class="title">今天吃点什么？</view></view><view class="chef-badge">家庭厨房</view></view>
+  <view class="card today-card">
+    <meal-tabs value="{{mealType}}" bindchange="changeMeal" />
+    <empty-state wx:if="{{loading || error}}" loading="{{loading}}" error="{{error}}" action-text="重试" bindaction="loadHome" />
+    <view wx:elif="{{day.meals[mealType].items.length}}" class="meal-list">
+      <view wx:for="{{day.meals[mealType].items}}" wx:key="id" class="meal-item"><text>{{item.dishName}}</text><text class="selector-count">{{item.selectors.length}} 人点</text></view>
+    </view>
+    <view wx:else class="meal-empty">这顿还没点菜，一起选几道吧。</view>
+    <button class="button-primary" bindtap="openOrder">我要点菜</button>
+  </view>
+  <view class="section-title">家庭工具箱</view>
+  <view class="quick-grid">
+    <view class="quick-card" bindtap="openOrder"><text class="quick-icon">🥢</text><text>点菜</text></view>
+    <view class="quick-card" bindtap="openDishes"><text class="quick-icon">📖</text><text>菜谱</text></view>
+    <view class="quick-card" bindtap="openShopping"><text class="quick-icon">🧺</text><text>采购</text></view>
+    <view class="quick-card" bindtap="openFamily"><text class="quick-icon">👨‍👩‍👧</text><text>邀请家人</text></view>
+  </view>
+  <view class="section-title">家里常吃</view>
+  <scroll-view scroll-x class="frequent-row"><view wx:for="{{frequent}}" wx:key="dishId" class="frequent-card"><view class="frequent-icon">🍲</view><view>{{item.dishName}}</view><view class="frequent-count">点过 {{item.count}} 次</view></view><view wx:if="{{!frequent.length}}" class="subtle">多点几次菜，这里会出现常吃推荐。</view></scroll-view>
+</view>

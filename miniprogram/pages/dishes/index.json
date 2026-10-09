@@ -1,0 +1,1 @@
+{ "navigationBarTitleText": "家庭菜谱", "usingComponents": { "dish-card": "/components/dish-card/index", "empty-state": "/components/empty-state/index" } }

@@ -1,0 +1,4 @@
+.empty-state { padding: 96rpx 32rpx; color: #737b76; text-align: center; }
+.empty-icon { margin-bottom: 18rpx; font-size: 72rpx; }
+.empty-title { line-height: 1.6; }
+.empty-action { min-height: 88rpx; margin-top: 28rpx; border: 2rpx solid #2f684a; border-radius: 22rpx; background: transparent; color: #2f684a; }
