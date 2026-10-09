@@ -1,4 +1,5 @@
 const api = require('../../utils/api');
+const { invitationErrorMessage } = require('../../utils/family-state');
 
 Page({
   data: {
@@ -26,7 +27,7 @@ Page({
       const preview = await api.request({ path: `/invitations/${encodeURIComponent(this.data.code)}/preview` });
       this.setData({ preview, loading: false });
     } catch (error) {
-      this.setData({ loading: false, error: error.message || '邀请已失效' });
+      this.setData({ loading: false, error: invitationErrorMessage(error.code) });
     }
   },
 
@@ -51,7 +52,7 @@ Page({
       wx.showToast({ title: '加入成功', icon: 'success' });
       wx.reLaunch({ url: '/pages/home/index' });
     } catch (error) {
-      this.setData({ error: error.message || '加入失败，请重试' });
+      this.setData({ error: invitationErrorMessage(error.code) });
     } finally {
       this.setData({ submitting: false });
     }

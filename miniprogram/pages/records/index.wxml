@@ -1,0 +1,11 @@
+<view class="page records-page">
+  <view class="month-header"><button bindtap="previousMonth">‹</button><view class="month-title">{{month}}</view><button bindtap="nextMonth">›</button></view>
+  <view class="weekday-row"><text wx:for="{{['日','一','二','三','四','五','六']}}" wx:key="*this">{{item}}</text></view>
+  <view class="calendar-grid"><view wx:for="{{calendarDays}}" wx:key="key" data-date="{{item.date}}" class="calendar-day {{item.empty ? 'empty' : ''}} {{selectedDate === item.date ? 'selected' : ''}}" bindtap="selectDay"><text>{{item.day}}</text><view wx:if="{{item.hasMeal}}" class="meal-dot"></view></view></view>
+  <view class="day-title">{{selectedDate}} 的三餐</view>
+  <empty-state wx:if="{{loading}}" loading />
+  <view wx:else>
+    <view wx:for="{{meals}}" wx:key="type" class="card meal-section"><view class="meal-heading"><text>{{item.label}}</text><button wx:if="{{item.items.length}}" data-meal="{{item.type}}" bindtap="openRepeat">再点这桌</button></view><view wx:if="{{!item.items.length}}" class="subtle">还没有菜品</view><view wx:for="{{item.items}}" wx:for-item="dish" wx:key="id" class="history-dish"><text>{{dish.dishName}}</text><text class="subtle">{{dish.selectors.length}} 人点</text></view></view>
+  </view>
+  <view wx:if="{{repeatSource}}" class="dialog-mask"><view class="dialog card"><view class="dialog-title">再次点这桌菜</view><picker mode="date" value="{{targetDate}}" bindchange="onTargetDate"><view class="field">{{targetDate}}</view></picker><view class="target-meals"><view wx:for="{{[{value:'breakfast',label:'早餐'},{value:'lunch',label:'午餐'},{value:'dinner',label:'晚餐'}]}}" wx:key="value" data-meal="{{item.value}}" class="target-pill {{targetMealType === item.value ? 'active' : ''}}" bindtap="chooseTargetMeal">{{item.label}}</view></view><button class="button-primary" loading="{{repeating}}" bindtap="repeatMeal">确认加入</button><button class="cancel-button" bindtap="closeRepeat">取消</button></view></view>
+</view>

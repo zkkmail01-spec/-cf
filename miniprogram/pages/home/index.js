@@ -26,5 +26,5 @@ Page({
   openOrder() { wx.navigateTo({ url: `/pages/order/index?date=${this.data.date}&mealType=${this.data.mealType}` }); },
   openDishes() { wx.switchTab({ url: '/pages/dishes/index' }); },
   openShopping() { wx.navigateTo({ url: '/pages/shopping/index' }); },
-  openFamily() { wx.navigateTo({ url: '/pages/family/index' }); },
+  openFamily() { wx.switchTab({ url: '/pages/family/index' }); },
 });
