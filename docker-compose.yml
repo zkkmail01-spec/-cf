@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: family_menu
+      POSTGRES_USER: family_menu
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - family_menu_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U family_menu -d family_menu"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://family_menu@db:5432/family_menu
+      ALLOW_MOCK_IDENTITY: "false"
+      API_PREFIX: /api/v1
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:80"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  family_menu_postgres:
