@@ -18,6 +18,8 @@
    - `CLOUDRUN_SERVICE_NAME` 填云托管服务名。
 3. 不要在小程序源码、`project.config.json` 或分享链接中写入 AppSecret、数据库密码或自行伪造的 `openid`。
 
+身份头只能来自可信云托管入口。生产服务必须禁止公网直连容器端口，仅允许同一云环境的 `callContainer`/云托管网关到达，并在发布后用直连 URL 验证无法携带自行伪造的 `x-wx-openid` 访问。如必须开放公网 API，必须在网关层增加可验证的身份凭证，不能直接信任请求头。
+
 小程序通过 `wx.cloud.callContainer` 调用 `/api/v1`，并在 `X-WX-SERVICE` 头中指定服务名。云托管会注入可信的微信身份头。
 
 ## 3. 构建和部署 FastAPI
@@ -48,7 +50,7 @@ alembic -c alembic.ini upgrade head
 
 ## 5. 本地联调
 
-Docker Compose 仅供本机联调，PostgreSQL 使用隔离的 Compose 网络且不暴露数据库端口。启动后手动迁移：
+Docker Compose 仅供本机联调，API 只绑定 `127.0.0.1:8000`，PostgreSQL 使用隔离的 Compose 网络且不暴露数据库端口。启动后手动迁移：
 
 ```sh
 docker compose up -d db

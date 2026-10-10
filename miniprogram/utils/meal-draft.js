@@ -12,6 +12,10 @@ function loadDraft(date, mealType) {
   return wx.getStorageSync(keyFor(date, mealType)) || [];
 }
 
+function hasDraft(date, mealType) {
+  return Array.isArray(wx.getStorageSync(keyFor(date, mealType)));
+}
+
 function clearDraft(date, mealType) {
   wx.removeStorageSync(keyFor(date, mealType));
 }
@@ -23,4 +27,4 @@ async function submitDraft(date, mealType, dishIds, submit) {
   return result;
 }
 
-module.exports = { saveDraft, loadDraft, clearDraft, submitDraft };
+module.exports = { saveDraft, loadDraft, hasDraft, clearDraft, submitDraft };

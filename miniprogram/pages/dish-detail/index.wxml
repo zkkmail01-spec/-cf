@@ -1,0 +1,26 @@
+<view class="page detail-page">
+  <view wx:if="{{loading}}" class="state">正在加载菜品…</view>
+  <view wx:elif="{{error}}" class="state">
+    <view class="error">{{error}}</view>
+  </view>
+  <view wx:elif="{{dish}}">
+    <image wx:if="{{dish.imageFileId}}" class="dish-image" src="{{dish.imageFileId}}" mode="aspectFill" />
+    <view wx:else class="dish-image placeholder">🍲</view>
+    <view class="card summary-card">
+      <view class="category">{{dish.categoryName}}</view>
+      <view class="title">{{dish.name}}</view>
+      <view class="description">{{dish.description || '厨师长还没有填写做法说明。'}}</view>
+    </view>
+    <view class="section-title">所需食材</view>
+    <view wx:if="{{dish.ingredients.length}}" class="ingredient-list">
+      <view wx:for="{{dish.ingredients}}" wx:key="id" class="ingredient-row">
+        <view>
+          <view class="ingredient-name">{{item.name}}</view>
+          <view wx:if="{{item.note}}" class="ingredient-note">{{item.note}}</view>
+        </view>
+        <view class="ingredient-amount">{{item.quantity}} {{item.unit}}</view>
+      </view>
+    </view>
+    <view wx:else class="empty-ingredients">暂未设置食材</view>
+  </view>
+</view>

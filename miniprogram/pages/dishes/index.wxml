@@ -4,5 +4,5 @@
   <scroll-view scroll-x class="category-row"><view data-id="" class="category-pill {{!categoryId ? 'active' : ''}}" bindtap="chooseCategory">全部</view><view wx:for="{{categories}}" wx:key="id" data-id="{{item.id}}" class="category-pill {{categoryId === item.id ? 'active' : ''}}" bindtap="chooseCategory">{{item.name}}</view></scroll-view>
   <view wx:if="{{isChef}}" class="category-create"><input class="category-input" placeholder="新增分类，如汤类" value="{{newCategory}}" bindinput="onNewCategory" /><button bindtap="addCategory">添加</button></view>
   <empty-state wx:if="{{loading || error || !visibleDishes.length}}" loading="{{loading}}" error="{{error}}" title="菜谱还是空的" action-text="刷新" bindaction="loadDishes" />
-  <dish-card wx:for="{{visibleDishes}}" wx:key="id" dish="{{item}}" editable="{{isChef}}" bindedit="editDish" />
+  <dish-card wx:for="{{visibleDishes}}" wx:key="id" dish="{{item}}" editable="{{isChef}}" bindselect="viewDish" bindedit="editDish" />
 </view>

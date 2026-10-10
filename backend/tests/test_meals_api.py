@@ -1,10 +1,12 @@
 import asyncio
+from datetime import date
 
 import httpx
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.api.deps import get_session
+from app.api.deps import CurrentMember
 from app.db.base import Base
 from app.main import create_app
 from app.models.dish import Dish, DishCategory, DishIngredient
@@ -12,6 +14,7 @@ from app.models.family import FamilyMember
 from app.models.family import Family
 from tests.conftest import wx_headers
 from tests.test_dishes_api import create_category, create_dish, create_family
+from app.services import meals as meal_service
 
 
 async def seed_member(session_factory, family_id: str, openid: str, nickname: str) -> None:
@@ -209,3 +212,73 @@ async def test_concurrent_selectors_are_merged_without_duplicate_items(tmp_path)
     assert len(items) == 1
     assert {row["openid"] for row in items[0]["selectors"]} == {"chef-a", "member-b"}
     await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_stale_cancellation_does_not_remove_another_members_selection(tmp_path):
+    database_url = f"sqlite+aiosqlite:///{(tmp_path / 'stale-cancel.db').as_posix()}"
+    engine = create_async_engine(database_url)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+    async with factory() as setup:
+        family = Family(name="并发家庭", owner_openid="member-a")
+        family.members.extend(
+            [
+                FamilyMember(openid="member-a", nickname="A", role="chef"),
+                FamilyMember(openid="member-b", nickname="B", role="member"),
+            ]
+        )
+        setup.add(family)
+        await setup.flush()
+        category = DishCategory(family_id=family.id, name="热菜")
+        dish = Dish(
+            family_id=family.id,
+            category=category,
+            name="番茄炒蛋",
+            created_by="member-a",
+            ingredients=[DishIngredient(name="鸡蛋", quantity=2, unit="个")],
+        )
+        setup.add(dish)
+        await setup.commit()
+        family_id, dish_id = family.id, dish.id
+
+    member_a = CurrentMember("a-id", family_id, "member-a", "A", None, "chef")
+    member_b = CurrentMember("b-id", family_id, "member-b", "B", None, "member")
+    async with factory() as session_a:
+        await meal_service.add_selection(
+            session_a, member_a, date(2026, 10, 10), "lunch", dish_id
+        )
+        await session_a.commit()
+        await meal_service.get_order(session_a, family_id, date(2026, 10, 10), "lunch")
+        async with factory() as session_b:
+            await meal_service.add_selection(
+                session_b, member_b, date(2026, 10, 10), "lunch", dish_id
+            )
+            await session_b.commit()
+        await meal_service.remove_selection(
+            session_a, member_a, date(2026, 10, 10), "lunch", dish_id
+        )
+        await session_a.commit()
+
+    async with factory() as verify:
+        final = await meal_service.get_day(verify, member_b, date(2026, 10, 10))
+    selectors = final["meals"]["lunch"]["items"][0]["selectors"]
+    assert [row["openid"] for row in selectors] == ["member-b"]
+    await engine.dispose()
+
+
+def test_mutation_rolls_back_when_idempotency_record_cannot_be_saved(client, monkeypatch):
+    _, dish = setup_catalog(client)
+
+    async def fail_to_save(*_args, **_kwargs):
+        raise RuntimeError("simulated crash before idempotency persistence")
+
+    monkeypatch.setattr(meal_service, "save_idempotent_response", fail_to_save)
+    with pytest.raises(RuntimeError):
+        select_dish(client, "chef-a", dish["id"], "atomic-key")
+
+    history = client.get(
+        "/api/v1/meals/2026-10-09", headers=wx_headers("chef-a")
+    )
+    assert history.json()["meals"]["lunch"]["items"] == []

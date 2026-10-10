@@ -60,3 +60,63 @@ test('keeps the active meal draft after an incremental request fails', async () 
     idempotent: true,
   }));
 });
+
+test('changes ordering date without dropping other meal selections', () => {
+  const state = require('../utils/order-state');
+  const order = state.toggleDish(state.createOrderState({ date: '2026-10-10', mealType: 'lunch' }), 'dish-1');
+
+  const changed = state.changeDate(order, '2026-10-11');
+
+  expect(changed.date).toBe('2026-10-11');
+  expect(state.selectedIds(changed)).toEqual(['dish-1']);
+});
+
+test('derives exact pending operations and retries the same direction', async () => {
+  const state = require('../utils/order-state');
+  const order = state.createOrderState({
+    date: '2026-10-10',
+    mealType: 'lunch',
+    selectionsByMeal: { breakfast: [], lunch: ['kept', 'added'], dinner: [] },
+  });
+  const operations = state.pendingOperations(['kept', 'removed'], ['kept', 'added']);
+  const request = jest.fn()
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValue({ ok: true });
+
+  expect(operations).toEqual([
+    { dishId: 'added', selected: true },
+    { dishId: 'removed', selected: false },
+  ]);
+  await expect(state.submitOperations(order, operations, request)).rejects.toThrow('offline');
+  await state.submitOperations(order, operations, request);
+
+  expect(request.mock.calls.map((call) => call[0].method)).toEqual(['PUT', 'PUT', 'DELETE']);
+  expect(wx.getStorageSync('meal-draft:2026-10-10:lunch')).toBeUndefined();
+});
+
+test('order page retry resubmits the failed action instead of toggling it', async () => {
+  const request = jest.fn()
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValueOnce({ ok: true });
+  jest.doMock('../utils/api', () => ({ request }));
+  let definition;
+  global.Page = (value) => { definition = value; };
+  global.getApp = () => ({ globalData: { session: { identity: { openid: 'me' } } } });
+  global.wx.showToast = jest.fn();
+  require('../pages/order/index');
+  const page = {
+    ...definition,
+    data: {
+      ...definition.data,
+      state: require('../utils/order-state').createOrderState({ date: '2026-10-10', mealType: 'lunch' }),
+      dishes: [{ id: 'dish-1' }],
+      visibleDishes: [{ id: 'dish-1', selected: false }],
+    },
+    setData(update) { this.data = { ...this.data, ...update }; },
+  };
+
+  await page.toggleDish({ detail: { dish: { id: 'dish-1' } } });
+  await page.retryPending();
+
+  expect(request.mock.calls.map((call) => call[0].method)).toEqual(['PUT', 'PUT']);
+});

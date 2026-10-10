@@ -91,6 +91,34 @@ def test_join_increments_usage_and_repeated_join_is_distinct(client):
     assert repeated.json()["error"]["code"] == "ALREADY_JOINED"
 
 
+def test_left_member_can_rejoin_same_family_with_a_new_invitation(client):
+    create_family(client, "chef-a")
+    first_invitation = create_invitation(client)
+    first_join = join(client, first_invitation["code"], "member-a", "爸爸")
+    assert first_join.status_code == 200
+    assert client.post(
+        "/api/v1/families/current/leave", headers=wx_headers("member-a")
+    ).status_code == 204
+
+    second_invitation = create_invitation(client)
+    rejoined = join(client, second_invitation["code"], "member-a", "爸爸回来了")
+
+    assert rejoined.status_code == 200
+    assert rejoined.json()["id"] == first_join.json()["id"]
+    assert rejoined.json()["nickname"] == "爸爸回来了"
+
+
+def test_already_joined_takes_precedence_over_exhausted_invitation(client):
+    create_family(client, "chef-a")
+    invitation = create_invitation(client, max_uses=1)
+    assert join(client, invitation["code"], "member-a").status_code == 200
+
+    repeated = join(client, invitation["code"], "member-a")
+
+    assert repeated.status_code == 409
+    assert repeated.json()["error"]["code"] == "ALREADY_JOINED"
+
+
 def test_invitation_expired_revoked_and_exhausted_errors(client, session_factory):
     create_family(client, "chef-a")
 

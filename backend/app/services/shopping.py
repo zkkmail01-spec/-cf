@@ -92,4 +92,4 @@ async def save_checks(
         session.add(check)
     check.checked_keys = sorted(set(checked_keys))
     check.updated_by = member.openid
-    await session.commit()
+    await session.flush()

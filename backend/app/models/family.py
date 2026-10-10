@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, utc_now
@@ -28,6 +28,13 @@ class FamilyMember(UUIDPrimaryKeyMixin, Base):
         CheckConstraint("role IN ('chef', 'member')", name="ck_member_role"),
         CheckConstraint("status IN ('active', 'left')", name="ck_member_status"),
         Index("ix_family_members_openid_status", "openid", "status"),
+        Index(
+            "uq_family_members_active_openid",
+            "openid",
+            unique=True,
+            sqlite_where=text("status = 'active'"),
+            postgresql_where=text("status = 'active'"),
+        ),
     )
 
     family_id: Mapped[str] = mapped_column(
@@ -38,6 +45,8 @@ class FamilyMember(UUIDPrimaryKeyMixin, Base):
     avatar_url: Mapped[str | None] = mapped_column(String(1024))
     role: Mapped[str] = mapped_column(String(16), nullable=False, default="member")
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
-    joined_at: Mapped[datetime] = mapped_column(default=utc_now, nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
     family: Mapped[Family] = relationship(back_populates="members")

@@ -3,7 +3,6 @@ from datetime import date
 from typing import Any
 
 from sqlalchemy import delete, func, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -52,17 +51,45 @@ async def save_idempotent_response(
     fingerprint: str,
     response: dict[str, Any],
 ) -> None:
+    record = await session.scalar(
+        select(IdempotencyRecord).where(
+            IdempotencyRecord.family_id == member.family_id,
+            IdempotencyRecord.openid == member.openid,
+            IdempotencyRecord.key == key,
+        )
+    )
+    if record is None:
+        record = IdempotencyRecord(
+            family_id=member.family_id,
+            openid=member.openid,
+            key=key,
+            request_fingerprint=fingerprint,
+            status_code=102,
+            response_json={},
+        )
+        session.add(record)
+    record.status_code = 200
+    record.response_json = response
+    await session.flush()
+
+
+async def claim_idempotency_key(
+    session: AsyncSession,
+    member: CurrentMember,
+    key: str,
+    fingerprint: str,
+) -> None:
     session.add(
         IdempotencyRecord(
             family_id=member.family_id,
             openid=member.openid,
             key=key,
             request_fingerprint=fingerprint,
-            status_code=200,
-            response_json=response,
+            status_code=102,
+            response_json={},
         )
     )
-    await session.commit()
+    await session.flush()
 
 
 def meal_order_query():
@@ -76,15 +103,18 @@ async def get_order(
     family_id: str,
     meal_date: date,
     meal_type: str,
+    *,
+    lock: bool = False,
 ) -> MealOrder | None:
+    statement = meal_order_query().where(
+        MealOrder.family_id == family_id,
+        MealOrder.meal_date == meal_date,
+        MealOrder.meal_type == meal_type,
+    )
+    if lock:
+        statement = statement.with_for_update().execution_options(populate_existing=True)
     return (
-        await session.execute(
-            meal_order_query().where(
-                MealOrder.family_id == family_id,
-                MealOrder.meal_date == meal_date,
-                MealOrder.meal_type == meal_type,
-            )
-        )
+        await session.execute(statement)
     ).scalar_one_or_none()
 
 
@@ -109,46 +139,39 @@ async def add_selection(
     if dish is None:
         raise AppError("DISH_NOT_FOUND", "菜品不存在", 404)
 
-    for attempt in range(3):
-        try:
-            order = await get_order(session, member.family_id, meal_date, meal_type)
-            if order is None:
-                order = MealOrder(
-                    family_id=member.family_id,
-                    meal_date=meal_date,
-                    meal_type=meal_type,
-                    version=0,
-                )
-                session.add(order)
-            item = next((row for row in order.items if row.dish_id == dish_id), None)
-            if item is None:
-                item = MealOrderItem(
-                    dish_id=dish.id,
-                    dish_name=dish.name,
-                    image_file_id=dish.image_file_id,
-                    category_name=dish.category.name,
-                    ingredients_snapshot=[
-                        {
-                            "name": ingredient.name,
-                            "quantity": str(ingredient.quantity.normalize()),
-                            "unit": ingredient.unit,
-                            "note": ingredient.note,
-                        }
-                        for ingredient in dish.ingredients
-                    ],
-                )
-                order.items.append(item)
-            if not any(row.openid == member.openid for row in item.selectors):
-                item.selectors.append(
-                    MealItemSelector(openid=member.openid, nickname=member.nickname)
-                )
-                order.version += 1
-            await session.commit()
-            return
-        except IntegrityError:
-            await session.rollback()
-            if attempt == 2:
-                raise AppError("MEAL_CONFLICT", "菜单已被更新，请重试", 409)
+    order = await get_order(session, member.family_id, meal_date, meal_type, lock=True)
+    if order is None:
+        order = MealOrder(
+            family_id=member.family_id,
+            meal_date=meal_date,
+            meal_type=meal_type,
+            version=0,
+        )
+        session.add(order)
+    item = next((row for row in order.items if row.dish_id == dish_id), None)
+    if item is None:
+        item = MealOrderItem(
+            dish_id=dish.id,
+            dish_name=dish.name,
+            image_file_id=dish.image_file_id,
+            category_name=dish.category.name,
+            ingredients_snapshot=[
+                {
+                    "name": ingredient.name,
+                    "quantity": str(ingredient.quantity.normalize()),
+                    "unit": ingredient.unit,
+                    "note": ingredient.note,
+                }
+                for ingredient in dish.ingredients
+            ],
+        )
+        order.items.append(item)
+    if not any(row.openid == member.openid for row in item.selectors):
+        item.selectors.append(
+            MealItemSelector(openid=member.openid, nickname=member.nickname)
+        )
+        order.version += 1
+    await session.flush()
 
 
 async def remove_selection(
@@ -158,7 +181,7 @@ async def remove_selection(
     meal_type: str,
     dish_id: str,
 ) -> None:
-    order = await get_order(session, member.family_id, meal_date, meal_type)
+    order = await get_order(session, member.family_id, meal_date, meal_type, lock=True)
     if order is None:
         return
     item = next((row for row in order.items if row.dish_id == dish_id), None)
@@ -171,7 +194,7 @@ async def remove_selection(
     if not item.selectors:
         order.items.remove(item)
     order.version += 1
-    await session.commit()
+    await session.flush()
 
 
 def order_to_dict(order: MealOrder | None, meal_type: str) -> dict[str, Any]:
@@ -257,7 +280,7 @@ async def repeat_meal(
     source = await get_order(session, member.family_id, source_date, source_type)
     if source is None:
         raise AppError("SOURCE_MEAL_EMPTY", "来源餐次没有菜品", 404)
-    target = await get_order(session, member.family_id, target_date, target_type)
+    target = await get_order(session, member.family_id, target_date, target_type, lock=True)
     if target is None:
         target = MealOrder(
             family_id=member.family_id,
@@ -287,7 +310,7 @@ async def repeat_meal(
             changed = True
     if changed:
         target.version += 1
-    await session.commit()
+    await session.flush()
 
 
 async def frequent_dishes(

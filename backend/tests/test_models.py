@@ -7,6 +7,8 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.models.family import Family, FamilyMember
+from app.models.idempotency import IdempotencyRecord
+from app.models.invitation import Invitation
 from app.models.meal import MealItemSelector, MealOrder, MealOrderItem
 
 
@@ -98,3 +100,40 @@ async def test_selector_is_unique_per_meal_item_and_openid(session):
 
     with pytest.raises(IntegrityError):
         await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_openid_can_have_only_one_active_family_membership(session):
+    family_a = Family(name="A家", owner_openid="chef-a")
+    family_b = Family(name="B家", owner_openid="chef-b")
+    session.add_all([family_a, family_b])
+    await session.flush()
+    session.add_all(
+        [
+            FamilyMember(
+                family_id=family_a.id,
+                openid="same-openid",
+                nickname="成员",
+                role="member",
+                status="active",
+            ),
+            FamilyMember(
+                family_id=family_b.id,
+                openid="same-openid",
+                nickname="成员",
+                role="member",
+                status="active",
+            ),
+        ]
+    )
+
+    with pytest.raises(IntegrityError):
+        await session.commit()
+
+
+def test_all_utc_datetime_columns_are_timezone_aware():
+    assert FamilyMember.__table__.c.joined_at.type.timezone is True
+    assert Invitation.__table__.c.expires_at.type.timezone is True
+    assert Invitation.__table__.c.created_at.type.timezone is True
+    assert MealItemSelector.__table__.c.selected_at.type.timezone is True
+    assert IdempotencyRecord.__table__.c.created_at.type.timezone is True

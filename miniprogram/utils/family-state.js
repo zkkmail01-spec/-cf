@@ -1,9 +1,10 @@
 const INVITATION_ERRORS = {
-  INVITATION_EXPIRED: '邀请已过期，请让厨师长重新邀请',
-  INVITATION_REVOKED: '邀请已被撤销',
-  INVITATION_EXHAUSTED: '邀请使用次数已用完',
+  INVITE_EXPIRED: '邀请已过期，请让厨师长重新邀请',
+  INVITE_REVOKED: '邀请已被撤销',
+  INVITE_EXHAUSTED: '邀请使用次数已用完',
   ALREADY_IN_FAMILY: '你已加入一个家庭',
-  INVITATION_NOT_FOUND: '邀请不存在或已失效',
+  ALREADY_JOINED: '你已经加入这个家庭',
+  INVITE_NOT_FOUND: '邀请不存在或已失效',
 };
 
 function permissionsFor(role) {

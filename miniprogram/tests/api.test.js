@@ -64,6 +64,26 @@ test('reuses pending idempotency key after network failure and clears it after s
   expect(storage.size).toBe(0);
 });
 
+test('uses different idempotency keys for different payloads on the same route', async () => {
+  const callContainer = jest.fn()
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValueOnce({ statusCode: 200, data: { saved: 'second' } })
+    .mockResolvedValueOnce({ statusCode: 200, data: { saved: 'first' } });
+  installWx(callContainer);
+  const api = require('../utils/api');
+  const first = { path: '/shopping/checks', method: 'PUT', data: { checkedKeys: ['盐|克'] }, idempotent: true };
+  const second = { path: '/shopping/checks', method: 'PUT', data: { checkedKeys: ['鸡蛋|个'] }, idempotent: true };
+
+  await expect(api.request(first)).rejects.toThrow('offline');
+  await api.request(second);
+  await api.request(first);
+
+  const keys = callContainer.mock.calls.map((call) => call[0].header['Idempotency-Key']);
+  expect(keys[1]).not.toBe(keys[0]);
+  expect(keys[2]).toBe(keys[0]);
+  expect(storage.size).toBe(0);
+});
+
 test('configuration never exports an AppSecret', () => {
   installWx(jest.fn());
   const env = require('../config/env');

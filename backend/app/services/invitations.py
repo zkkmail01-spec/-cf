@@ -3,6 +3,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import case, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentMember, find_current_member
@@ -91,7 +92,6 @@ async def join_family(
     payload: InvitationJoin,
 ) -> FamilyMember:
     invitation = await get_by_code(session, code, lock=True)
-    validate_invitation_state(invitation)
     existing = await find_current_member(identity, session)
     if existing is not None:
         error_code = (
@@ -101,17 +101,42 @@ async def join_family(
         )
         message = "你已经加入该家庭" if error_code == "ALREADY_JOINED" else "你已经加入其他家庭"
         raise AppError(error_code, message, 409)
-    member = FamilyMember(
-        family_id=invitation.family_id,
-        openid=identity.openid,
-        nickname=payload.nickname.strip(),
-        avatar_url=payload.avatar_url,
-        role="member",
-        status="active",
+    validate_invitation_state(invitation)
+    member = await session.scalar(
+        select(FamilyMember)
+        .where(
+            FamilyMember.family_id == invitation.family_id,
+            FamilyMember.openid == identity.openid,
+        )
+        .with_for_update()
     )
+    if member is None:
+        member = FamilyMember(
+            family_id=invitation.family_id,
+            openid=identity.openid,
+            nickname=payload.nickname.strip(),
+            avatar_url=payload.avatar_url,
+            role="member",
+            status="active",
+        )
+        session.add(member)
+    else:
+        member.nickname = payload.nickname.strip()
+        member.avatar_url = payload.avatar_url
+        member.role = "member"
+        member.status = "active"
+        member.joined_at = utc_now()
     invitation.used_count += 1
-    session.add(member)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        active = await find_current_member(identity, session)
+        if active is not None:
+            code = "ALREADY_JOINED" if active.family_id == invitation.family_id else "ALREADY_IN_FAMILY"
+            message = "你已经加入该家庭" if code == "ALREADY_JOINED" else "你已经加入其他家庭"
+            raise AppError(code, message, 409)
+        raise
     await session.refresh(member)
     return member
 

@@ -13,16 +13,29 @@ class ApiError extends Error {
   }
 }
 
-function operationKey(method, path) {
-  return `${IDEMPOTENCY_STORAGE_PREFIX}${method}:${path}`;
+function stableStringify(value) {
+  if (value === undefined) return '';
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+}
+
+function shortHash(value) {
+  let hash = 5381;
+  for (let index = 0; index < value.length; index += 1) hash = ((hash << 5) + hash) ^ value.charCodeAt(index);
+  return (hash >>> 0).toString(36);
+}
+
+function operationKey(method, path, data) {
+  return `${IDEMPOTENCY_STORAGE_PREFIX}${method}:${path}:${shortHash(stableStringify(data))}`;
 }
 
 function createIdempotencyKey() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function pendingIdempotencyKey(method, path) {
-  const storageKey = operationKey(method, path);
+function pendingIdempotencyKey(method, path, data) {
+  const storageKey = operationKey(method, path, data);
   let key = wx.getStorageSync(storageKey);
   if (!key) {
     key = createIdempotencyKey();
@@ -40,7 +53,7 @@ async function request({ path, method = 'GET', data, idempotent = false }) {
   let idempotency = null;
 
   if (idempotent) {
-    idempotency = pendingIdempotencyKey(normalizedMethod, path);
+    idempotency = pendingIdempotencyKey(normalizedMethod, path, data);
     header['Idempotency-Key'] = idempotency.key;
   }
 

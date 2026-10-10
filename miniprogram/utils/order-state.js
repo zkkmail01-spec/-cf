@@ -15,6 +15,10 @@ function switchMeal(state, mealType) {
   return { ...state, mealType };
 }
 
+function changeDate(state, date) {
+  return { ...state, date };
+}
+
 function selectedIds(state) {
   return state.selectionsByMeal[state.mealType] || [];
 }
@@ -49,26 +53,40 @@ function decorateDishes(dishes, state) {
   return dishes.map((dish) => ({ ...dish, selected: selected.includes(dish.id) }));
 }
 
-async function submitDish(state, dishId, selected, request) {
-  const ids = selectedIds(state);
-  drafts.saveDraft(state.date, state.mealType, ids);
-  const result = await request({
-    path: `/meals/${state.date}/${state.mealType}/selections/${dishId}`,
-    method: selected ? 'PUT' : 'DELETE',
-    idempotent: true,
-  });
+function pendingOperations(serverIds, draftIds) {
+  return [
+    ...draftIds.filter((id) => !serverIds.includes(id)).map((dishId) => ({ dishId, selected: true })),
+    ...serverIds.filter((id) => !draftIds.includes(id)).map((dishId) => ({ dishId, selected: false })),
+  ];
+}
+
+async function submitOperations(state, operations, request) {
+  drafts.saveDraft(state.date, state.mealType, selectedIds(state));
+  for (const operation of operations) {
+    await request({
+      path: `/meals/${state.date}/${state.mealType}/selections/${operation.dishId}`,
+      method: operation.selected ? 'PUT' : 'DELETE',
+      idempotent: true,
+    });
+  }
   drafts.clearDraft(state.date, state.mealType);
-  return result;
+}
+
+async function submitDish(state, dishId, selected, request) {
+  return submitOperations(state, [{ dishId, selected }], request);
 }
 
 module.exports = {
   MEAL_TYPES,
   createOrderState,
   switchMeal,
+  changeDate,
   selectedIds,
   selectedCount,
   toggleDish,
   filterDishes,
   decorateDishes,
+  pendingOperations,
+  submitOperations,
   submitDish,
 };

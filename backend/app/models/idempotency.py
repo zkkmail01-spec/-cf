@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ForeignKey, JSON, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, UUIDPrimaryKeyMixin, utc_now
@@ -23,4 +23,6 @@ class IdempotencyRecord(UUIDPrimaryKeyMixin, Base):
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     status_code: Mapped[int] = mapped_column(nullable=False)
     response_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

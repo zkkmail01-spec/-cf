@@ -6,6 +6,7 @@
     "pages/order/index",
     "pages/dishes/index",
     "pages/dish-edit/index",
+    "pages/dish-detail/index",
     "pages/records/index",
     "pages/shopping/index",
     "pages/family/index"

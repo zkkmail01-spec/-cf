@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import CheckConstraint, ForeignKey, JSON, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, utc_now
@@ -70,6 +70,8 @@ class MealItemSelector(UUIDPrimaryKeyMixin, Base):
     )
     openid: Mapped[str] = mapped_column(String(128), nullable=False)
     nickname: Mapped[str] = mapped_column(String(80), nullable=False)
-    selected_at: Mapped[datetime] = mapped_column(default=utc_now, nullable=False)
+    selected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
     meal_order_item: Mapped[MealOrderItem] = relationship(back_populates="selectors")

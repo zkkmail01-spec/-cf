@@ -15,6 +15,7 @@ Page({
   chooseCategory(event) { this.setData({ categoryId: event.currentTarget.dataset.id || '' }); this.applyFilters(); },
   applyFilters() { this.setData({ visibleDishes: filterDishes(this.data.dishes, { categoryId: this.data.categoryId, query: this.data.query }) }); },
   addDish() { wx.navigateTo({ url: '/pages/dish-edit/index' }); },
+  viewDish(event) { wx.navigateTo({ url: `/pages/dish-detail/index?id=${event.detail.dish.id}` }); },
   editDish(event) { wx.navigateTo({ url: `/pages/dish-edit/index?id=${event.detail.dish.id}` }); },
   onNewCategory(event) { this.setData({ newCategory: event.detail.value }); },
   async addCategory() {

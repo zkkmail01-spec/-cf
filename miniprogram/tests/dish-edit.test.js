@@ -36,3 +36,39 @@ test('failed image upload preserves the complete form for retry', async () => {
   await expect(uploadDishImage(form, 'wxfile://potato.jpg', jest.fn().mockRejectedValue(new Error('upload failed'))))
     .rejects.toMatchObject({ message: 'upload failed', form });
 });
+
+test('recipe list opens a read-only detail page for ordinary members', () => {
+  jest.doMock('../utils/api', () => ({ request: jest.fn() }));
+  jest.doMock('../utils/order-state', () => ({ filterDishes: jest.fn() }));
+  let definition;
+  global.Page = (value) => { definition = value; };
+  global.wx = { navigateTo: jest.fn() };
+  require('../pages/dishes/index');
+
+  definition.viewDish({ detail: { dish: { id: 'dish-42' } } });
+
+  expect(wx.navigateTo).toHaveBeenCalledWith({ url: '/pages/dish-detail/index?id=dish-42' });
+});
+
+test('read-only dish detail loads the complete recipe for family members', async () => {
+  const dish = {
+    id: 'dish-42',
+    name: '番茄炒蛋',
+    categoryName: '热菜',
+    imageFileId: 'cloud://demo/tomato.jpg',
+    description: '鸡蛋炒嫩一些',
+    ingredients: [{ id: 'ingredient-1', name: '鸡蛋', quantity: 3, unit: '个', note: '常温' }],
+  };
+  const request = jest.fn().mockResolvedValue(dish);
+  jest.doMock('../utils/api', () => ({ request }));
+  let definition;
+  global.Page = (value) => { definition = value; };
+  global.wx = { setNavigationBarTitle: jest.fn() };
+  require('../pages/dish-detail/index');
+  const page = { data: { dish: null, loading: true, error: '' }, setData(update) { this.data = { ...this.data, ...update }; } };
+
+  await definition.onLoad.call(page, { id: 'dish-42' });
+
+  expect(request).toHaveBeenCalledWith({ path: '/dishes/dish-42' });
+  expect(page.data).toMatchObject({ dish, loading: false, error: '' });
+});
