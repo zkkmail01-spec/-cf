@@ -12,6 +12,8 @@ Page({
   },
 
   onLoad(options) {
+    const profile = wx.getStorageSync('wechat-profile');
+    if (profile) this.setData({ nickname: profile.nickName || '', avatarUrl: profile.avatarUrl || '' });
     const code = options.code || (options.scene && decodeURIComponent(options.scene));
     if (code) {
       wx.redirectTo({ url: `/pages/invite/index?code=${encodeURIComponent(code)}` });
@@ -46,7 +48,7 @@ Page({
   getWechatProfile() {
     wx.getUserProfile({
       desc: '用于显示家庭成员头像和昵称',
-      success: ({ userInfo }) => this.setData({ nickname: userInfo.nickName || this.data.nickname, avatarUrl: userInfo.avatarUrl || '' }),
+      success: ({ userInfo }) => { wx.setStorageSync('wechat-profile', userInfo); this.setData({ nickname: userInfo.nickName || this.data.nickname, avatarUrl: userInfo.avatarUrl || '' }); },
       fail: () => this.setData({ error: '你可以手动填写昵称，也可以重新点击授权' }),
     });
   },

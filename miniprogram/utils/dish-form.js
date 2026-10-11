@@ -16,9 +16,17 @@ function validateDish(form) {
   return errors;
 }
 
+function compressImage(filePath) {
+  return new Promise((resolve, reject) => {
+    if (typeof wx === 'undefined' || typeof wx.compressImage !== 'function') return resolve(filePath);
+    wx.compressImage({ src: filePath, quality: 75, success: (result) => resolve(result.tempFilePath), fail: reject });
+  });
+}
+
 async function uploadDishImage(form, filePath, upload) {
   try {
-    const imageFileId = await upload(filePath);
+    const compressedPath = await compressImage(filePath);
+    const imageFileId = await upload(compressedPath);
     return { ...form, imageFileId };
   } catch (error) {
     error.form = form;
@@ -26,4 +34,4 @@ async function uploadDishImage(form, filePath, upload) {
   }
 }
 
-module.exports = { canEditDish, validateDish, uploadDishImage };
+module.exports = { canEditDish, validateDish, compressImage, uploadDishImage };
