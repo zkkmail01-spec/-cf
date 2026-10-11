@@ -25,6 +25,15 @@ async def find_current_member(
     identity: CurrentIdentity,
     session: AsyncSession,
 ) -> CurrentMember | None:
+    if hasattr(session, "store"):
+        rows = await session.store.list("family_members", {"openid": identity.openid, "status": "active"})
+        row = rows[0] if rows else None
+        if row is None:
+            return None
+        return CurrentMember(
+            member_id=row["_id"], family_id=row["family_id"], openid=row["openid"],
+            nickname=row["nickname"], avatar_url=row.get("avatar_url"), role=row["role"],
+        )
     result = await session.execute(
         select(FamilyMember).where(
             FamilyMember.openid == identity.openid,

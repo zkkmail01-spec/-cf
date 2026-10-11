@@ -23,7 +23,7 @@ router = APIRouter(tags=["families"])
 
 def member_read(member: FamilyMember | CurrentMember) -> MemberRead:
     return MemberRead(
-        id=member.id if isinstance(member, FamilyMember) else member.member_id,
+        id=member.id if isinstance(member, (FamilyMember,)) or hasattr(member, "id") else member.member_id,
         openid=member.openid,
         nickname=member.nickname,
         avatar_url=member.avatar_url,

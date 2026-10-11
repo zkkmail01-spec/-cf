@@ -5,6 +5,8 @@ from typing import Any
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from types import SimpleNamespace
+from datetime import datetime, timezone
 
 from app.api.deps import CurrentMember
 from app.core.errors import AppError
@@ -14,6 +16,10 @@ from app.models.meal import MealItemSelector, MealOrder, MealOrderItem
 
 
 MEAL_TYPES = ("breakfast", "lunch", "dinner")
+
+
+def _entity(row: dict) -> SimpleNamespace:
+    return SimpleNamespace(id=row["_id"], **{k: v for k, v in row.items() if k != "_id"})
 
 
 def request_fingerprint(value: str) -> str:
@@ -26,6 +32,14 @@ async def get_idempotent_response(
     key: str,
     fingerprint: str,
 ) -> dict[str, Any] | None:
+    if hasattr(session, "store"):
+        rows = await session.store.list("idempotency_records", {"family_id": member.family_id, "openid": member.openid, "key": key})
+        record = rows[0] if rows else None
+        if record is None:
+            return None
+        if record.get("request_fingerprint") != fingerprint:
+            raise AppError("IDEMPOTENCY_KEY_REUSED", "同一个幂等键不能用于不同请求", 409)
+        return record.get("response_json")
     record = await session.scalar(
         select(IdempotencyRecord).where(
             IdempotencyRecord.family_id == member.family_id,
@@ -51,6 +65,13 @@ async def save_idempotent_response(
     fingerprint: str,
     response: dict[str, Any],
 ) -> None:
+    if hasattr(session, "store"):
+        rows = await session.store.list("idempotency_records", {"family_id": member.family_id, "openid": member.openid, "key": key})
+        if rows:
+            await session.store.update("idempotency_records", rows[0]["_id"], {"status_code": 200, "response_json": response})
+        else:
+            await session.store.create("idempotency_records", {"family_id": member.family_id, "openid": member.openid, "key": key, "request_fingerprint": fingerprint, "status_code": 200, "response_json": response})
+        return
     record = await session.scalar(
         select(IdempotencyRecord).where(
             IdempotencyRecord.family_id == member.family_id,
@@ -79,6 +100,12 @@ async def claim_idempotency_key(
     key: str,
     fingerprint: str,
 ) -> None:
+    if hasattr(session, "store"):
+        rows = await session.store.list("idempotency_records", {"family_id": member.family_id, "openid": member.openid, "key": key})
+        if rows:
+            return
+        await session.store.create("idempotency_records", {"family_id": member.family_id, "openid": member.openid, "key": key, "request_fingerprint": fingerprint, "status_code": 102, "response_json": {}})
+        return
     session.add(
         IdempotencyRecord(
             family_id=member.family_id,
@@ -125,6 +152,24 @@ async def add_selection(
     meal_type: str,
     dish_id: str,
 ) -> None:
+    if hasattr(session, "store"):
+        dishes = await session.store.list("dishes", {"_id": dish_id, "family_id": member.family_id, "is_active": True})
+        if not dishes:
+            raise AppError("DISH_NOT_FOUND", "菜品不存在", 404)
+        dish = dishes[0]
+        categories = await session.store.get("dish_categories", dish["category_id"]) or {"name": ""}
+        rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": meal_date.isoformat(), "meal_type": meal_type})
+        order = rows[0] if rows else await session.store.create("meal_orders", {"family_id": member.family_id, "meal_date": meal_date.isoformat(), "meal_type": meal_type, "version": 0, "items": []})
+        items = order.get("items", [])
+        item = next((i for i in items if i.get("dishId") == dish_id), None)
+        if item is None:
+            item = {"id": f"{order['_id']}-{dish_id}", "dishId": dish_id, "dishName": dish["name"], "imageFileId": dish.get("image_file_id"), "categoryName": categories.get("name", ""), "ingredients": dish.get("ingredients", []), "selectors": []}
+            items.append(item)
+        if not any(s.get("openid") == member.openid for s in item["selectors"]):
+            item["selectors"].append({"openid": member.openid, "nickname": member.nickname, "selectedAt": datetime.now(timezone.utc).isoformat()})
+            order["version"] = order.get("version", 0) + 1
+        await session.store.update("meal_orders", order["_id"], {"items": items, "version": order["version"]})
+        return
     dish = (
         await session.execute(
             select(Dish)
@@ -181,6 +226,20 @@ async def remove_selection(
     meal_type: str,
     dish_id: str,
 ) -> None:
+    if hasattr(session, "store"):
+        rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": meal_date.isoformat(), "meal_type": meal_type})
+        if not rows:
+            return
+        order = rows[0]; items = order.get("items", [])
+        for item in list(items):
+            if item.get("dishId") != dish_id:
+                continue
+            item["selectors"] = [s for s in item.get("selectors", []) if s.get("openid") != member.openid]
+            if not item["selectors"]:
+                items.remove(item)
+            order["version"] = order.get("version", 0) + 1
+        await session.store.update("meal_orders", order["_id"], {"items": items, "version": order["version"]})
+        return
     order = await get_order(session, member.family_id, meal_date, meal_type, lock=True)
     if order is None:
         return
@@ -231,6 +290,22 @@ def order_to_dict(order: MealOrder | None, meal_type: str) -> dict[str, Any]:
 async def get_day(
     session: AsyncSession, member: CurrentMember, meal_date: date
 ) -> dict[str, Any]:
+    if hasattr(session, "store"):
+        rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": meal_date.isoformat()})
+        by_type = {row["meal_type"]: row for row in rows}
+        meals = {}
+        for meal_type in MEAL_TYPES:
+            row = by_type.get(meal_type)
+            if row is None:
+                meals[meal_type] = {"id": None, "mealType": meal_type, "version": 0, "items": []}
+                continue
+            items = []
+            for item in row.get("items", []):
+                copy = dict(item)
+                copy["ingredients"] = [{**ingredient, "quantity": str(ingredient.get("quantity", "0"))} for ingredient in copy.get("ingredients", [])]
+                items.append(copy)
+            meals[meal_type] = {"id": row["_id"], "mealType": meal_type, "version": row.get("version", 0), "items": items}
+        return {"date": meal_date.isoformat(), "meals": meals}
     result = await session.execute(
         meal_order_query().where(
             MealOrder.family_id == member.family_id,
@@ -250,6 +325,15 @@ async def get_day(
 async def calendar_dates(
     session: AsyncSession, member: CurrentMember, month: str
 ) -> list[date]:
+    if hasattr(session, "store"):
+        try:
+            year, month_number = (int(part) for part in month.split("-"))
+            start = date(year, month_number, 1)
+            end = date(year + (month_number == 12), 1 if month_number == 12 else month_number + 1, 1)
+        except (ValueError, TypeError):
+            raise AppError("INVALID_MONTH", "月份格式应为 YYYY-MM", 422)
+        rows = await session.store.list("meal_orders", {"family_id": member.family_id})
+        return sorted({date.fromisoformat(row["meal_date"]) for row in rows if start <= date.fromisoformat(row["meal_date"]) < end})
     try:
         year, month_number = (int(part) for part in month.split("-"))
         start = date(year, month_number, 1)
@@ -277,6 +361,24 @@ async def repeat_meal(
     target_date: date,
     target_type: str,
 ) -> None:
+    if hasattr(session, "store"):
+        source_rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": source_date.isoformat(), "meal_type": source_type})
+        if not source_rows or not source_rows[0].get("items"):
+            raise AppError("SOURCE_MEAL_EMPTY", "来源餐次没有菜品", 404)
+        target_rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": target_date.isoformat(), "meal_type": target_type})
+        target = target_rows[0] if target_rows else await session.store.create("meal_orders", {"family_id": member.family_id, "meal_date": target_date.isoformat(), "meal_type": target_type, "version": 0, "items": []})
+        items = target.get("items", [])
+        for src in source_rows[0]["items"]:
+            dst = next((i for i in items if i.get("dishId") == src.get("dishId")), None)
+            if dst is None:
+                dst = {k: v for k, v in src.items() if k != "selectors"}
+                dst["selectors"] = []
+                items.append(dst)
+            if not any(s.get("openid") == member.openid for s in dst["selectors"]):
+                dst["selectors"].append({"openid": member.openid, "nickname": member.nickname, "selectedAt": datetime.now(timezone.utc).isoformat()})
+                target["version"] = target.get("version", 0) + 1
+        await session.store.update("meal_orders", target["_id"], {"items": items, "version": target["version"]})
+        return
     source = await get_order(session, member.family_id, source_date, source_type)
     if source is None:
         raise AppError("SOURCE_MEAL_EMPTY", "来源餐次没有菜品", 404)
@@ -316,6 +418,14 @@ async def repeat_meal(
 async def frequent_dishes(
     session: AsyncSession, member: CurrentMember, limit: int = 6
 ) -> list[dict[str, Any]]:
+    if hasattr(session, "store"):
+        rows = await session.store.list("meal_orders", {"family_id": member.family_id})
+        counts = {}
+        for order in rows:
+            for item in order.get("items", []):
+                if item.get("dishId"):
+                    counts.setdefault(item["dishId"], {"dishId": item["dishId"], "dishName": item.get("dishName", ""), "imageFileId": item.get("imageFileId"), "count": 0})["count"] += 1
+        return sorted(counts.values(), key=lambda x: (-x["count"], x["dishName"]))[:limit]
     result = await session.execute(
         select(
             MealOrderItem.dish_id,
