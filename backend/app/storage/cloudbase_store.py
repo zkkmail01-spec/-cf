@@ -13,9 +13,10 @@ class CloudBaseDocumentStore:
         self.client = client
 
     async def create(self, collection: str, document: Mapping[str, Any]) -> dict[str, Any]:
-        # CloudBase 的插入接口在不同版本中可能只返回 DocumentId，甚至只返回
-        # RequestId。兼容这些返回格式，并在确实没有返回 ID 时补一个本地 ID。
+        # CloudBase 的插入接口可能只返回 RequestId。预先写入 _id，确保
+        # 返回给业务层的 ID 与实际保存的文档 ID 是同一个。
         data = deepcopy(dict(document))
+        data.setdefault("_id", uuid4().hex)
         result = await self.client.request("database.insertDocument", {"collectionName": collection, "data": data})
         response = result.get("Response", {})
         created = response.get("Document") or response.get("document") or {}
@@ -28,7 +29,7 @@ class CloudBaseDocumentStore:
             or response.get("_id")
         )
         if not document_id:
-            document_id = uuid4().hex
+            document_id = data["_id"]
         created.setdefault("_id", document_id)
         return created
 
