@@ -20,7 +20,7 @@ Page({
   chooseImage() {
     wx.chooseMedia({ count: 1, mediaType: ['image'], success: async (result) => {
       try { const form = await dishForm.uploadDishImage(this.data.form, result.tempFiles[0].tempFilePath, api.uploadDishImage); this.setData({ form, error: '' }); }
-      catch (error) { this.setData({ error: '图片上传失败，文字内容已保留，请重试' }); }
+      catch (error) { this.setData({ error: error.message === 'IMAGE_TOO_LARGE' ? '图片压缩后仍超过 2MB，请选择更小的图片' : '图片上传失败，文字内容已保留，请重试' }); }
     } });
   },
   async save() {

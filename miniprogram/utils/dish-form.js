@@ -17,10 +17,20 @@ function validateDish(form) {
 }
 
 function compressImage(filePath) {
-  return new Promise((resolve, reject) => {
-    if (typeof wx === 'undefined' || typeof wx.compressImage !== 'function') return resolve(filePath);
-    wx.compressImage({ src: filePath, quality: 75, success: (result) => resolve(result.tempFilePath), fail: reject });
-  });
+  const limit = 2 * 1024 * 1024;
+  if (typeof wx === 'undefined' || typeof wx.compressImage !== 'function') return Promise.resolve(filePath);
+  const fileSize = (path) => new Promise((resolve, reject) => wx.getFileInfo({ filePath: path, success: (result) => resolve(result.size), fail: reject }));
+  return (async () => {
+    let currentPath = filePath;
+    let size = await fileSize(currentPath);
+    for (const quality of [80, 60, 40, 20]) {
+      if (size <= limit) return currentPath;
+      currentPath = await new Promise((resolve, reject) => wx.compressImage({ src: currentPath, quality, success: (result) => resolve(result.tempFilePath), fail: reject }));
+      size = await fileSize(currentPath);
+    }
+    if (size > limit) throw new Error('IMAGE_TOO_LARGE');
+    return currentPath;
+  })();
 }
 
 async function uploadDishImage(form, filePath, upload) {
