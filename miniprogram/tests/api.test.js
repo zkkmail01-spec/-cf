@@ -28,7 +28,7 @@ test('calls Cloud Hosting with API prefix and service header', async () => {
   expect(callContainer).toHaveBeenCalledWith(expect.objectContaining({
     path: '/api/v1/session',
     method: 'GET',
-    header: expect.objectContaining({ 'X-WX-SERVICE': 'YOUR_CLOUDRUN_SERVICE_NAME' }),
+    header: expect.objectContaining({ 'X-WX-SERVICE': 'family-menu-api' }),
   }));
 });
 
@@ -88,7 +88,7 @@ test('configuration never exports an AppSecret', () => {
   installWx(jest.fn());
   const env = require('../config/env');
 
-  expect(env.CLOUDBASE_ENV_ID).toBe('YOUR_CLOUDBASE_ENV_ID');
-  expect(env.CLOUDRUN_SERVICE_NAME).toBe('YOUR_CLOUDRUN_SERVICE_NAME');
+  expect(env.CLOUDBASE_ENV_ID).toBe('zkk-20261010-d6gfxxdhfe3f8fc75');
+  expect(env.CLOUDRUN_SERVICE_NAME).toBe('family-menu-api');
   expect(Object.keys(env).some((key) => /secret/i.test(key))).toBe(false);
 });
