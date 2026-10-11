@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from app.core.config import Settings
-from app.storage.cloudbase_client import CloudBaseAdminClient
+from app.storage.cloudbase_client import CloudBaseAPIError, CloudBaseAdminClient
 
 
 def test_cloudbase_settings_require_credentials():
@@ -62,3 +62,19 @@ async def test_request_builds_signed_cloudbase_admin_request():
     assert request.headers["X-TC-Region"] == "ap-shanghai"
     assert request.headers["Authorization"].startswith("TC3-HMAC-SHA256 Credential=sid/")
     assert result["Response"]["RequestId"] == "r1"
+
+
+@pytest.mark.asyncio
+async def test_request_raises_cloudbase_api_error_from_successful_http_response():
+    async def handler(_request: httpx.Request):
+        return httpx.Response(200, json={"Response": {"Error": {"Code": "COLLECTION_NOT_EXIST", "Message": "missing"}}})
+
+    client = CloudBaseAdminClient(
+        env_id="env-1",
+        region="ap-shanghai",
+        secret_id="sid",
+        secret_key="skey",
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+    with pytest.raises(CloudBaseAPIError, match="COLLECTION_NOT_EXIST"):
+        await client.request("database.queryDocument", {"collectionName": "family_members", "query": {}})

@@ -7,7 +7,7 @@
 1. 在微信公众平台创建小程序，获取 AppID。
 2. 在微信开发者工具中开通云开发，记录云环境 ID。
 3. 在同一云环境开通云托管，创建一个服务，例如 `family-menu-api`。
-4. 在 CloudBase 文档数据库中创建 `families`、`categories`、`dishes`、`invitations`、`meal_orders`、`shopping_checks`、`idempotency_records` 集合。
+4. 在 CloudBase 文档数据库中创建 `families`、`family_members`、`categories`、`dishes`、`invitations`、`meal_orders`、`shopping_checks`、`idempotency_records` 集合。
 5. 在云存储中配置小程序用户可上传菜品图片；服务端只保存 `fileID`。
 
 ## 2. 填写小程序配置
@@ -36,6 +36,8 @@
 | `API_PREFIX` | `/api/v1` |
 
 SecretId 和 SecretKey 只能由云托管密钥注入，不能提交到代码仓库、Docker 镜像或小程序代码中。CloudBase 请求失败时直接返回错误，不会静默切换到内存数据；`STORAGE_BACKEND=sql` 仍可用于本地 SQLite/PostgreSQL 回退。
+
+文档数据库接口的 `data`、`query` 字段必须传 JSON 字符串；服务端会检查 CloudBase `Response.Error`，写入失败会直接提示，避免出现页面显示创建成功但数据库没有文档的情况。
 
 ## 4. 本地联调
 

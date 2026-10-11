@@ -10,6 +10,13 @@ from typing import Any
 import httpx
 
 
+class CloudBaseAPIError(RuntimeError):
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(f"CloudBase API error {code}: {message}")
+        self.code = code
+        self.message = message
+
+
 def _ejson_encode(value: Any) -> Any:
     if isinstance(value, datetime):
         return {"$date": int(value.timestamp() * 1000)}
@@ -96,6 +103,12 @@ class CloudBaseAdminClient:
         )
         response.raise_for_status()
         result = response.json()
+        api_error = result.get("Response", {}).get("Error")
+        if api_error:
+            raise CloudBaseAPIError(
+                str(api_error.get("Code", "UNKNOWN")),
+                str(api_error.get("Message", "CloudBase request failed")),
+            )
         if "Response" in result:
             result["Response"] = _ejson_decode(result["Response"])
         return result
