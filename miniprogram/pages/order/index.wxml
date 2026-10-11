@@ -1,5 +1,5 @@
 <view class="page order-page">
-  <view class="date-row"><picker mode="date" start="{{minDate}}" end="{{maxDate}}" value="{{state.date}}" bindchange="onDateChange"><view class="date-label">{{state.date}} ▾</view></picker><text class="date-hint">可安排未来三天</text><text class="selected-count">已选 {{selectedCount}} 道</text></view>
+  <view class="date-row"><picker mode="date" start="{{minDate}}" end="{{maxDate}}" value="{{state.date}}" bindchange="onDateChange"><view class="date-label">{{state.date}} ▾</view></picker><text class="date-hint">今天及未来三天</text><text class="selected-count">已选 {{selectedCount}} 道</text></view>
   <meal-tabs value="{{state.mealType}}" bindchange="changeMeal" />
   <input class="field search" placeholder="搜索菜名或食材" value="{{query}}" bindinput="onSearch" />
   <scroll-view scroll-x class="category-row"><view data-id="" class="category-pill {{!categoryId ? 'active' : ''}}" bindtap="chooseCategory">全部</view><view wx:for="{{categories}}" wx:key="id" data-id="{{item.id}}" class="category-pill {{categoryId === item.id ? 'active' : ''}}" bindtap="chooseCategory">{{item.name}}</view></scroll-view>

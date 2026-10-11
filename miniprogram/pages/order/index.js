@@ -7,7 +7,7 @@ Page({
   data: { state: null, minDate: '', maxDate: '', serverSelectionsByMeal: {}, pendingOperations: [], categories: [], dishes: [], visibleDishes: [], categoryId: '', query: '', loading: true, error: '', pendingDishId: '', selectedCount: 0 },
   onLoad(options) {
     const today = dates.formatLocalDate();
-    this.setData({ minDate: today, maxDate: dates.shiftDate(today, 2), state: orderState.createOrderState({ date: options.date || today, mealType: options.mealType }) });
+    this.setData({ minDate: today, maxDate: dates.shiftDate(today, 3), state: orderState.createOrderState({ date: options.date || today, mealType: options.mealType }) });
     this.loadData();
   },
   async loadData() {

@@ -28,8 +28,8 @@ def request_fingerprint(value: str) -> str:
 
 def validate_plannable_date(value: date) -> None:
     today = date.today()
-    if value < today or value > today + timedelta(days=2):
-        raise AppError("DATE_OUT_OF_RANGE", "只能安排今天和未来两天的菜单", 422)
+    if value < today or value > today + timedelta(days=3):
+        raise AppError("DATE_OUT_OF_RANGE", "只能安排今天和未来三天的菜单", 422)
 
 
 async def get_idempotent_response(
