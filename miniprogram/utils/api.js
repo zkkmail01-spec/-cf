@@ -1,4 +1,4 @@
-const { CLOUDRUN_SERVICE_NAME } = require('../config/env');
+const { CLOUDRUN_SERVICE_NAME, LOCAL_API_BASE_URL } = require('../config/env');
 
 const API_PREFIX = '/api/v1';
 const IDEMPOTENCY_STORAGE_PREFIX = 'pending-idempotency:';
@@ -55,6 +55,29 @@ async function request({ path, method = 'GET', data, idempotent = false }) {
   if (idempotent) {
     idempotency = pendingIdempotencyKey(normalizedMethod, path, data);
     header['Idempotency-Key'] = idempotency.key;
+  }
+
+  if (LOCAL_API_BASE_URL) {
+    const localResponse = await new Promise((resolve, reject) => {
+      wx.request({
+        url: `${LOCAL_API_BASE_URL}${API_PREFIX}${path}`,
+        method: normalizedMethod,
+        header: { ...header, 'X-Mock-Openid': wx.getStorageSync('dev-openid') || 'dev-user', 'X-WX-Appid': 'local-dev' },
+        data,
+        success: resolve,
+        fail: reject,
+      });
+    });
+    if (localResponse.statusCode < 200 || localResponse.statusCode >= 300) {
+      const envelope = localResponse.data && localResponse.data.error;
+      throw new ApiError((envelope && envelope.message) || '请求失败，请稍后重试', {
+        code: (envelope && envelope.code) || 'REQUEST_FAILED',
+        statusCode: localResponse.statusCode,
+        details: envelope && envelope.details,
+      });
+    }
+    if (idempotency) wx.removeStorageSync(idempotency.storageKey);
+    return localResponse.data;
   }
 
   const response = await wx.cloud.callContainer({
