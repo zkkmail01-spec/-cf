@@ -1,5 +1,5 @@
 import hashlib
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from sqlalchemy import delete, func, select
@@ -24,6 +24,12 @@ def _entity(row: dict) -> SimpleNamespace:
 
 def request_fingerprint(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def validate_plannable_date(value: date) -> None:
+    today = date.today()
+    if value < today or value > today + timedelta(days=2):
+        raise AppError("DATE_OUT_OF_RANGE", "只能安排今天和未来两天的菜单", 422)
 
 
 async def get_idempotent_response(
@@ -153,6 +159,8 @@ async def add_selection(
     dish_id: str,
 ) -> None:
     if hasattr(session, "store"):
+        validate_plannable_date(meal_date)
+    if hasattr(session, "store"):
         dishes = await session.store.list("dishes", {"_id": dish_id, "family_id": member.family_id, "is_active": True})
         if not dishes:
             raise AppError("DISH_NOT_FOUND", "菜品不存在", 404)
@@ -226,6 +234,8 @@ async def remove_selection(
     meal_type: str,
     dish_id: str,
 ) -> None:
+    if hasattr(session, "store"):
+        validate_plannable_date(meal_date)
     if hasattr(session, "store"):
         rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": meal_date.isoformat(), "meal_type": meal_type})
         if not rows:
@@ -361,6 +371,8 @@ async def repeat_meal(
     target_date: date,
     target_type: str,
 ) -> None:
+    if hasattr(session, "store"):
+        validate_plannable_date(target_date)
     if hasattr(session, "store"):
         source_rows = await session.store.list("meal_orders", {"family_id": member.family_id, "meal_date": source_date.isoformat(), "meal_type": source_type})
         if not source_rows or not source_rows[0].get("items"):
