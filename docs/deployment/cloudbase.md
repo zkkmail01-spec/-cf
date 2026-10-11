@@ -20,7 +20,7 @@
 
 ## 3. 构建和部署 FastAPI
 
-云托管构建上下文选择 `backend`，Dockerfile 路径为 `backend/Dockerfile`。容器监听 80 端口，健康检查为 `GET /health`。
+云托管构建上下文选择 `backend`，Dockerfile 路径为 `Dockerfile`。容器以普通用户监听 8000 端口，CloudBase 服务端口也填写 8000，健康检查为 `GET /health`。
 
 云托管环境变量：
 
