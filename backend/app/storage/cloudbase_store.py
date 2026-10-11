@@ -82,6 +82,7 @@ class CloudBaseDocumentStore:
         result = await self.client.request("database.insertDocument", {"collectionName": collection, "data": _json_payload(data)})
         response = _response_data(result)
         created = _document_from(result) or {}
+
         if not created:
             created = dict(data)
         document_id = (
