@@ -1,5 +1,5 @@
 <view class="page dishes-page">
-  <view class="toolbar"><view><view class="title">家庭菜谱</view><view class="subtitle">找一道全家都爱吃的菜</view></view><button wx:if="{{isChef}}" class="add-button" bindtap="addDish">＋ 新菜</button></view>
+  <view class="toolbar"><view class="back-button" bindtap="goBack" aria-label="返回">‹</view><view class="toolbar-title"><view class="title">家庭菜谱</view><view class="subtitle">找一道全家都爱吃的菜</view></view><button wx:if="{{isChef}}" class="add-button" bindtap="addDish">＋ 新菜</button></view>
   <input class="field" placeholder="搜索菜名或食材" value="{{query}}" bindinput="onSearch" />
   <scroll-view scroll-x class="category-row"><view data-id="" class="category-pill {{!categoryId ? 'active' : ''}}" bindtap="chooseCategory">全部</view><view wx:for="{{categories}}" wx:key="id" data-id="{{item.id}}" class="category-pill {{categoryId === item.id ? 'active' : ''}}" bindtap="chooseCategory">{{item.name}}</view></scroll-view>
   <view wx:if="{{isChef}}" class="category-create"><input class="category-input" placeholder="新增分类，如汤类" value="{{newCategory}}" bindinput="onNewCategory" /><button bindtap="addCategory">添加</button></view>

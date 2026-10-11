@@ -1,6 +1,6 @@
 const MEAL_LABELS = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐' };
 
-function buildMonthGrid(month, markedDates = []) {
+function buildMonthGrid(month, markedDates = [], holidays = {}) {
   const [year, monthNumber] = month.split('-').map(Number);
   const count = new Date(year, monthNumber, 0).getDate();
   const leading = new Date(year, monthNumber - 1, 1).getDay();
@@ -8,7 +8,10 @@ function buildMonthGrid(month, markedDates = []) {
   const grid = Array.from({ length: leading }, (_, index) => ({ key: `empty-${index}`, empty: true }));
   for (let day = 1; day <= count; day += 1) {
     const date = `${month}-${String(day).padStart(2, '0')}`;
-    grid.push({ key: date, date, day, hasMeal: marks.has(date), empty: false });
+    const weekday = new Date(year, monthNumber - 1, day).getDay();
+    const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const holiday = holidays[date];
+    grid.push({ key: date, date, day, weekday: weekdayNames[weekday], isWeekend: weekday === 0 || weekday === 6, hasMeal: marks.has(date), holidayName: holiday && holiday.name, holidayType: holiday && holiday.type, empty: false });
   }
   return grid;
 }

@@ -12,6 +12,7 @@
   </view>
   <view wx:else class="card form-card">
     <view class="section-title">创建我的家庭</view>
+    <button class="profile-button" bindtap="getWechatProfile">微信登录</button>
     <input class="field" placeholder="例如：幸福一家" maxlength="80" value="{{familyName}}" bindinput="onFamilyName" />
     <input class="field" placeholder="家人怎么称呼你" maxlength="80" value="{{nickname}}" bindinput="onNickname" />
     <button class="button-primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="createFamily">创建家庭</button>

@@ -1,16 +1,17 @@
 const api = require('../../utils/api');
 const dates = require('../../utils/date');
 const records = require('../../utils/records-state');
+const holiday = require('../../utils/holiday');
 
 Page({
   data: { month: '', calendarDays: [], selectedDate: '', meals: [], loading: true, error: '', repeatSource: null, targetDate: '', targetMealType: 'lunch', repeating: false },
-  onLoad() { const selectedDate = dates.formatLocalDate(); this.setData({ month: selectedDate.slice(0, 7), selectedDate, targetDate: selectedDate }); this.loadMonth(); this.loadDay(selectedDate); },
-  onShow() { if (this.data.selectedDate) { this.loadMonth(); this.loadDay(this.data.selectedDate); } },
+  onLoad() { const selectedDate = dates.formatLocalDate(); this.setData({ month: selectedDate.slice(0, 7), selectedDate, targetDate: selectedDate }); this._firstLoad = true; this.loadMonth(); this.loadDay(selectedDate); },
+  onShow() { if (this._firstLoad) { this._firstLoad = false; return; } if (this.data.selectedDate) { this.loadMonth(); this.loadDay(this.data.selectedDate); } },
   async loadMonth() {
     const month = this.data.month;
     const requestId = (this._monthRequestId || 0) + 1;
     this._monthRequestId = requestId;
-    try { const result = await api.request({ path: `/meals/calendar?month=${month}` }); if (requestId === this._monthRequestId) this.setData({ calendarDays: records.buildMonthGrid(month, result.dates) }); }
+    try { const result = await api.request({ path: `/meals/calendar?month=${month}` }); if (requestId === this._monthRequestId) this.setData({ calendarDays: records.buildMonthGrid(month, result.dates, holiday.holidaysForMonth(month)) }); }
     catch (error) { if (requestId === this._monthRequestId) this.setData({ error: error.message || '日历加载失败' }); }
   },
   previousMonth() { this.setData({ month: dates.shiftMonth(this.data.month, -1) }); this.loadMonth(); },

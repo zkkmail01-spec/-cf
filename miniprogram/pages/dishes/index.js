@@ -3,6 +3,11 @@ const { filterDishes } = require('../../utils/order-state');
 
 Page({
   data: { dishes: [], visibleDishes: [], categories: [], categoryId: '', query: '', isChef: false, loading: true, error: '', newCategory: '' },
+  goBack() {
+    const pages = getCurrentPages();
+    if (pages.length > 1) wx.navigateBack({ delta: 1 });
+    else wx.switchTab({ url: '/pages/home/index' });
+  },
   onShow() { this.loadDishes(); },
   async loadDishes() {
     this.setData({ loading: true, error: '' });

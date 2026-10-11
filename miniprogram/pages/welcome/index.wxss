@@ -17,6 +17,8 @@
   font-weight: 650;
 }
 
+.profile-button { margin: 20rpx 0; border: 2rpx solid #2f684a; border-radius: 16rpx; background: #f5fbf6; color: #2f684a; font-size: 26rpx; }
+
 .divider {
   position: relative;
   margin: 40rpx 0;

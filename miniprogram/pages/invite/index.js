@@ -6,6 +6,7 @@ Page({
     code: '',
     preview: null,
     nickname: '',
+    avatarUrl: '',
     loading: true,
     submitting: false,
     error: '',
@@ -35,6 +36,14 @@ Page({
     this.setData({ nickname: event.detail.value });
   },
 
+  getWechatProfile() {
+    wx.getUserProfile({
+      desc: '用于显示家庭成员头像和昵称',
+      success: ({ userInfo }) => this.setData({ nickname: userInfo.nickName || this.data.nickname, avatarUrl: userInfo.avatarUrl || '' }),
+      fail: () => this.setData({ error: '你可以手动填写昵称，也可以重新点击授权' }),
+    });
+  },
+
   async joinFamily() {
     const nickname = this.data.nickname.trim();
     if (!nickname) {
@@ -46,7 +55,7 @@ Page({
       await api.request({
         path: `/invitations/${encodeURIComponent(this.data.code)}/join`,
         method: 'POST',
-        data: { nickname },
+        data: { nickname, avatarUrl: this.data.avatarUrl || null },
         idempotent: true,
       });
       wx.showToast({ title: '加入成功', icon: 'success' });

@@ -57,12 +57,17 @@ async function request({ path, method = 'GET', data, idempotent = false }) {
     header['Idempotency-Key'] = idempotency.key;
   }
 
-  if (LOCAL_API_BASE_URL) {
+  // 开发者工具本地调试：填写 LOCAL_API_BASE_URL 后绕过云托管。
+  if (LOCAL_API_BASE_URL && typeof wx.request === 'function') {
     const localResponse = await new Promise((resolve, reject) => {
       wx.request({
         url: `${LOCAL_API_BASE_URL}${API_PREFIX}${path}`,
         method: normalizedMethod,
-        header: { ...header, 'X-Mock-Openid': wx.getStorageSync('dev-openid') || 'dev-user', 'X-WX-Appid': 'local-dev' },
+        header: {
+          ...header,
+          'X-Mock-Openid': wx.getStorageSync('dev-openid') || 'dev-user',
+          'X-WX-Appid': 'local-dev',
+        },
         data,
         success: resolve,
         fail: reject,

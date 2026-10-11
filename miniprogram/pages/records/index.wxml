@@ -1,7 +1,7 @@
 <view class="page records-page">
   <view class="month-header"><button bindtap="previousMonth">‹</button><view class="month-title">{{month}}</view><button bindtap="nextMonth">›</button></view>
   <view class="weekday-row"><text wx:for="{{['日','一','二','三','四','五','六']}}" wx:key="*this">{{item}}</text></view>
-  <view class="calendar-grid"><view wx:for="{{calendarDays}}" wx:key="key" data-date="{{item.date}}" class="calendar-day {{item.empty ? 'empty' : ''}} {{selectedDate === item.date ? 'selected' : ''}}" bindtap="selectDay"><text>{{item.day}}</text><view wx:if="{{item.hasMeal}}" class="meal-dot"></view></view></view>
+  <view class="calendar-grid"><view wx:for="{{calendarDays}}" wx:key="key" data-date="{{item.date}}" class="calendar-day {{item.empty ? 'empty' : ''}} {{item.isWeekend ? 'weekend' : ''}} {{item.holidayType === 'holiday' ? 'holiday' : ''}} {{item.holidayType === 'workday' ? 'workday' : ''}} {{selectedDate === item.date ? 'selected' : ''}}" bindtap="selectDay"><text>{{item.day}}</text><text class="weekday-name">{{item.weekday}}</text><text wx:if="{{item.holidayName}}" class="holiday-name">{{item.holidayName}}</text><view wx:if="{{item.hasMeal}}" class="meal-dot"></view></view></view>
   <view class="day-title">{{selectedDate}} 的三餐</view>
   <empty-state wx:if="{{loading}}" loading />
   <empty-state wx:elif="{{error}}" error="{{error}}" action-text="重试" bindaction="retryDay" />

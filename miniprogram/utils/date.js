@@ -16,4 +16,10 @@ function shiftMonth(month, delta) {
   return formatLocalMonth(date);
 }
 
-module.exports = { formatLocalDate, formatLocalMonth, shiftMonth };
+function shiftDate(value, delta) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + delta);
+  return formatLocalDate(date);
+}
+
+module.exports = { formatLocalDate, formatLocalMonth, shiftMonth, shiftDate };

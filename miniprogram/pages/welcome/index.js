@@ -7,6 +7,7 @@ Page({
     error: '',
     familyName: '',
     nickname: '',
+    avatarUrl: '',
     inviteCode: '',
   },
 
@@ -42,6 +43,14 @@ Page({
     this.setData({ nickname: event.detail.value });
   },
 
+  getWechatProfile() {
+    wx.getUserProfile({
+      desc: '用于显示家庭成员头像和昵称',
+      success: ({ userInfo }) => this.setData({ nickname: userInfo.nickName || this.data.nickname, avatarUrl: userInfo.avatarUrl || '' }),
+      fail: () => this.setData({ error: '你可以手动填写昵称，也可以重新点击授权' }),
+    });
+  },
+
   onInviteCode(event) {
     this.setData({ inviteCode: event.detail.value.trim() });
   },
@@ -58,9 +67,10 @@ Page({
       await api.request({
         path: '/families',
         method: 'POST',
-        data: { name: familyName, nickname },
+        data: { name: familyName, nickname, avatarUrl: this.data.avatarUrl || null },
         idempotent: true,
       });
+      this.setData({ error: '' });
       wx.reLaunch({ url: '/pages/home/index' });
     } catch (error) {
       this.setData({ error: error.message || '创建失败，请重试' });

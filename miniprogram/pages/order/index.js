@@ -1,11 +1,13 @@
 const api = require('../../utils/api');
 const orderState = require('../../utils/order-state');
 const drafts = require('../../utils/meal-draft');
+const dates = require('../../utils/date');
 
 Page({
-  data: { state: null, serverSelectionsByMeal: {}, pendingOperations: [], categories: [], dishes: [], visibleDishes: [], categoryId: '', query: '', loading: true, error: '', pendingDishId: '', selectedCount: 0 },
+  data: { state: null, minDate: '', maxDate: '', serverSelectionsByMeal: {}, pendingOperations: [], categories: [], dishes: [], visibleDishes: [], categoryId: '', query: '', loading: true, error: '', pendingDishId: '', selectedCount: 0 },
   onLoad(options) {
-    this.setData({ state: orderState.createOrderState({ date: options.date, mealType: options.mealType }) });
+    const today = dates.formatLocalDate();
+    this.setData({ minDate: today, maxDate: dates.shiftDate(today, 2), state: orderState.createOrderState({ date: options.date || today, mealType: options.mealType }) });
     this.loadData();
   },
   async loadData() {

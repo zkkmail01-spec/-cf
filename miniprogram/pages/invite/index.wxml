@@ -9,6 +9,7 @@
     <view class="family-avatar">🏠</view>
     <view class="title">{{preview.familyName}}</view>
     <view class="subtitle">{{preview.inviterNickname}} 邀请你加入这个家庭，一起安排每天三餐。</view>
+    <button class="profile-button" bindtap="getWechatProfile">微信登录</button>
     <input class="field" placeholder="家人怎么称呼你" maxlength="80" value="{{nickname}}" bindinput="onNickname" />
     <button class="button-primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="joinFamily">确认加入</button>
     <view wx:if="{{error}}" class="error">{{error}}</view>
